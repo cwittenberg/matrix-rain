@@ -2,6 +2,7 @@
   "name": "Matrix Code Rain",
   "description": "Matrix-style animated green code rain behind your windows on every workspace and monitor.",
   "uuid": "matrix-rain@cwittenberg",
+  "version": 12,
   "shell-version": ["50"],
-  "settings-schema": "org.gnome.shell.extensions.matrix-rain"
+  "settings-schema": "org.gnome.shell.extensions.matrix-rain.v2"
 }
