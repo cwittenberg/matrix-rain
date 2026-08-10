@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.matrix-rain" path="/org/gnome/shell/extensions/matrix-rain/">
+    <key name="font-size" type="d">
+      <default>18.0</default>
+      <range min="10.0" max="48.0"/>
+      <summary>Code rain font size</summary>
+      <description>The glyph size in logical pixels.</description>
+    </key>
+  </schema>
+</schemalist>
