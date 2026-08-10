@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
   <schema id="org.gnome.shell.extensions.matrix-rain" path="/org/gnome/shell/extensions/matrix-rain/">
+    <key name="glow-enabled" type="b">
+      <default>true</default>
+      <summary>Enable phosphor glow</summary>
+      <description>Add a lightweight subpixel halo around the glyphs.</description>
+    </key>
     <key name="font-size" type="d">
       <default>18.0</default>
       <range min="10.0" max="48.0"/>

@@ -26,9 +26,17 @@ export default class MatrixRainPreferences extends ExtensionPreferences {
         });
         page.add(group);
 
+        const glowRow = new Adw.SwitchRow({
+            title: 'Phosphor glow',
+            subtitle: 'Add a lightweight halo around the glyphs.',
+        });
+        group.add(glowRow);
+        window._settings.bind(
+            'glow-enabled', glowRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+
         const sizeRow = new Adw.ActionRow({
             title: 'Font size',
-            subtitle: 'Larger glyphs use fewer streams and fewer compositor resources.',
+            subtitle: 'Larger glyphs use fewer columns and fewer compositor resources.',
         });
         group.add(sizeRow);
 
@@ -38,10 +46,11 @@ export default class MatrixRainPreferences extends ExtensionPreferences {
         scale.set_hexpand(true);
         scale.set_size_request(280, -1);
         scale.set_digits(0);
-        scale.set_draw_value(true);
-        scale.set_value_pos(Gtk.PositionType.RIGHT);
+        scale.set_draw_value(false);
+        scale.add_mark(10, Gtk.PositionType.BOTTOM, 'Small');
         scale.add_mark(18, Gtk.PositionType.BOTTOM, null);
         scale.add_mark(32, Gtk.PositionType.BOTTOM, null);
+        scale.add_mark(48, Gtk.PositionType.BOTTOM, 'Large');
         sizeRow.add_suffix(scale);
         sizeRow.set_activatable_widget(scale);
 

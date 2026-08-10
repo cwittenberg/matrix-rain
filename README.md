@@ -9,11 +9,14 @@ or other assets are copied from that project.
 
 ## Performance
 
-Each rain column is a small `Clutter.Text` actor. Mutter animates actor positions
-on the compositor thread, so the extension has no JavaScript frame loop and no
-full-screen Cairo buffers. Glyph strings are regenerated only after a stream
-has completely crossed its monitor. Increasing the font size also reduces the
-number of streams.
+Each column is one narrow `Clutter.Text` actor containing a stationary glyph
+grid. A low-priority 10 Hz scheduler only rebuilds a column when an
+illumination head advances to the next cell or one of its glyphs cycles. There
+are no full-screen Cairo buffers, blur passes, or external processes, and each
+monitor is capped at 180 columns. Increasing the font size reduces both column
+and row counts. The optional phosphor glow uses two subpixel `Clutter.Clone`
+actors per monitor; clones reuse the existing column layer without duplicating
+glyph state, text layouts, timers, or framebuffer-sized textures.
 
 ## Build and run locally
 
