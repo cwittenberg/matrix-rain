@@ -1,0 +1,154 @@
+# Korean translations for Matrix Code Rain package.
+# Copyright (C) 2026 Christian Wittenberg
+# This file is distributed under the same license as the Matrix Code Rain package.
+# Automatically generated, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Matrix Code Rain 20\n"
+"Report-Msgid-Bugs-To: https://github.com/cwittenberg/matrix-rain/issues\n"
+"POT-Creation-Date: 2026-08-15 02:17+0200\n"
+"PO-Revision-Date: 2026-08-15 02:17+0200\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: ko\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: prefs.js:112
+msgid "Appearance"
+msgstr "모양"
+
+#: prefs.js:116
+msgid "Code Rain"
+msgstr "코드 레인"
+
+#: prefs.js:117
+msgid "Tune the rain for your display setup."
+msgstr "디스플레이 구성에 맞게 코드 레인을 조정합니다."
+
+#: prefs.js:125
+msgid "Phosphor glow"
+msgstr "인광 글로"
+
+#: prefs.js:126
+msgid "Add a single-pass halo."
+msgstr "단일 패스 후광을 추가합니다."
+
+#: prefs.js:132
+msgid "Soft anti-aliasing"
+msgstr "부드러운 앤티앨리어싱"
+
+#: prefs.js:133
+msgid "Blend adjacent glyph samples for a softer cinematic bloom."
+msgstr "인접한 글리프 샘플을 혼합하여 더 부드러운 영화 같은 블룸 효과를 만듭니다."
+
+#: prefs.js:137
+msgid "Font size"
+msgstr "글꼴 크기"
+
+#: prefs.js:138
+msgid "Larger glyphs use fewer columns and fewer compositor resources."
+msgstr "글리프가 클수록 열 수와 컴포지터 리소스 사용량이 줄어듭니다."
+
+#: prefs.js:146
+msgid "Glyph scale"
+msgstr "글리프 배율"
+
+#: prefs.js:147
+msgid "Set the actual percentage of each grid cell filled by its symbol."
+msgstr "각 그리드 셀에서 기호가 차지하는 실제 비율을 설정합니다."
+
+#: prefs.js:155
+msgid "Rain speed"
+msgstr "낙하 속도"
+
+#: prefs.js:156
+msgid "Control how quickly streams fall and glyphs change."
+msgstr "스트림의 낙하 속도와 글리프 변경 속도를 조절합니다."
+
+#: prefs.js:164
+msgid "Stream density"
+msgstr "스트림 밀도"
+
+#: prefs.js:165
+msgid "Increase or reduce the number of independent code streams."
+msgstr "독립적인 코드 스트림 수를 늘리거나 줄입니다."
+
+#: prefs.js:173
+msgid "Transparency"
+msgstr "투명도"
+
+#: prefs.js:174
+msgid "Lower this for a subtle effect over the desktop."
+msgstr "값을 낮추면 데스크톱 위에 더 은은한 효과가 나타납니다."
+
+#: prefs.js:186
+msgid "About"
+msgstr "정보"
+
+#: prefs.js:192
+msgid "Matrix Code Rain"
+msgstr "Matrix 코드 레인"
+
+#: metadata.json:3
+msgid ""
+"Matrix animated green code rain behind your windows on every workspace and "
+"monitor.\n"
+"\n"
+"Requires a GPU to run."
+msgstr ""
+"모든 작업 공간과 모니터의 창 뒤에 Matrix 스타일의 움직이는 녹색 코드 레인을 표시합니다.\n"
+"\n"
+"실행하려면 GPU가 필요합니다."
+
+#: prefs.js:193
+msgid "Matrix-style animated code rain for the GNOME desktop."
+msgstr "GNOME 데스크톱을 위한 Matrix 스타일의 움직이는 코드 레인입니다."
+
+#: prefs.js:205
+msgid "Buy me a coffee ☕"
+msgstr "커피 한 잔 사주기 ☕"
+
+#: prefs.js:210
+msgid "Report a Bug 🐞"
+msgstr "버그 신고 🐞"
+
+#: prefs.js:214
+msgid "Request a Feature 💡"
+msgstr "기능 요청 💡"
+
+#: prefs.js:220
+msgid "Developer"
+msgstr "개발자"
+
+#: prefs.js:223
+msgid "Local / EGO (Auto-injected)"
+msgstr "로컬 / EGO(자동 삽입)"
+
+#: prefs.js:227
+msgid "Version"
+msgstr "버전"
+
+#: prefs.js:231
+msgid "Graphics requirement"
+msgstr "그래픽 요구 사항"
+
+#: prefs.js:232
+msgid ""
+"Requires an OpenGL-capable compositor; CPU-only rendering is not supported."
+msgstr "OpenGL 지원 컴포지터가 필요하며 CPU 전용 렌더링은 지원되지 않습니다."
+
+#: shell/errorNotification.js:13
+msgid "Matrix Code could not start"
+msgstr "Matrix 코드를 시작할 수 없음"
+
+#: shell/errorNotification.js:14
+msgid ""
+"GNOME could not create the required OpenGL effect. This is likely because "
+"your system has no GPU or lacks the required OpenGL support."
+msgstr ""
+"GNOME에서 필요한 OpenGL 효과를 만들 수 없습니다. 시스템에 GPU가 없거나 필요한 "
+"OpenGL 지원이 부족할 수 있습니다."

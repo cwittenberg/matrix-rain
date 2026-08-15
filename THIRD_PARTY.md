@@ -4,9 +4,8 @@
 
 `assets/matrixcode_mask_rgb.png` is an RGB-mask conversion of the classic Matrix
 MSDF atlas from [Rezmason/matrix](https://github.com/Rezmason/matrix).
-`assets/matrix_field_mask.png` is a precomposed field derived solely from that
-mask, with one resized atlas glyph per cell. The upstream work is copyright ©
-2018 Rezmason and is used under the MIT License:
+The upstream work is copyright © 2018 Rezmason and is used under the MIT
+License:
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the “Software”), to deal

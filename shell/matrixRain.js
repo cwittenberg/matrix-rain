@@ -8,12 +8,13 @@ import St from 'gi://St';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
+import {notifyRendererFailure} from './errorNotification.js';
+
 const FRAME_INTERVAL_MS = 33;
 const GLYPH_ATLAS_COLUMNS = 8;
 const GLYPH_ATLAS_ROWS = 8;
 const GLYPH_ATLAS_SIZE = 512;
 const GLYPH_SEQUENCE_LENGTH = 57;
-const HEARTBEAT_FRAME_INTERVAL = 300;
 const LOG_PREFIX = '[matrix-rain]';
 const SETTINGS_POLL_FRAME_INTERVAL = 30;
 
@@ -29,6 +30,9 @@ uniform float matrix_rows;
 uniform float matrix_glow;
 uniform float matrix_glyph_scale;
 uniform float matrix_opacity;
+uniform float matrix_speed;
+uniform float matrix_stream_density;
+uniform float matrix_soft_blur;
 
 float matrix_hash(float value) {
     return fract(sin(value * 12.9898) * 43758.5453);
@@ -52,10 +56,7 @@ vec3 matrix_drop(float head, float row, float length, float cell_height) {
     float tail = pow(max(0.0, 1.0 - distance_from_head / length), 1.35);
     float cursor = 1.0 - smoothstep(0.0, cell_height * 0.92,
         distance_from_head);
-    float glint_position = length * 0.56;
-    float glint = 1.0 - smoothstep(0.0, cell_height * 0.72,
-        abs(distance_from_head - glint_position));
-    return vec3(tail, cursor, glint);
+    return vec3(tail, cursor, 0.0);
 }
 `;
 
@@ -64,10 +65,11 @@ vec2 screen_uv = cogl_tex_coord_in[0].xy;
 vec2 grid_position = screen_uv * vec2(matrix_columns, matrix_rows);
 vec2 cell = floor(grid_position);
 vec2 within_cell = fract(grid_position);
-float requested_glyph_scale = mix(
-    1.0, matrix_glyph_scale, step(0.01, matrix_glyph_scale));
-float resolved_glyph_scale = mix(0.48, 0.96,
-    clamp((requested_glyph_scale - 0.5) / 1.5, 0.0, 1.0));
+float animation_time = matrix_time * matrix_speed;
+float stream_density = clamp(matrix_stream_density, 0.25, 2.0);
+// Glyph scale is the literal fraction of a grid cell occupied by the glyph.
+// The preference exposes the same value as 50-100%, with no hidden remapping.
+float resolved_glyph_scale = clamp(matrix_glyph_scale, 0.50, 1.0);
 vec2 glyph_local = (within_cell - 0.5) / resolved_glyph_scale + 0.5;
 float glyph_cell_mask =
     step(0.0, glyph_local.x) * step(glyph_local.x, 1.0) *
@@ -75,29 +77,75 @@ float glyph_cell_mask =
 float cell_seed = cell.x * 131.0 + cell.y * 17.0;
 float column_seed = matrix_hash(cell.x * 7.17 + 3.0);
 float depth = matrix_hash(cell.x * 3.91 + 11.0);
-float glyph_epoch = floor(matrix_time * mix(0.75, 2.4,
-    matrix_hash(cell_seed + 41.0)) + cell.y * 0.173);
+// Most trail glyphs persist for several frames while a smaller subset mutates
+// quickly, matching the selective redraw used by the classic screensaver.
+float mutation_seed = matrix_hash(cell_seed + 41.0);
+float mutation_rate = mix(0.20, 1.65, mutation_seed * mutation_seed);
+float glyph_epoch = floor(animation_time * mutation_rate +
+    cell.y * 0.173 + mutation_seed * 7.0);
 float glyph_index = floor(matrix_hash(
     cell_seed + glyph_epoch * 97.31) * ${GLYPH_SEQUENCE_LENGTH}.0);
 float glyph_alpha = matrix_glyph_alpha(glyph_index, glyph_local) *
     glyph_cell_mask;
 
-float length = mix(0.20, 0.52, matrix_hash(cell.x * 5.73 + 19.0));
-float gap = mix(0.08, 0.30, matrix_hash(cell.x * 9.31 + 7.0));
-float period = 1.0 + length + gap;
+float gap = mix(0.05, 0.22, matrix_hash(cell.x * 9.31 + 7.0));
+float period = 1.78 + gap;
 float speed = mix(0.12, 0.31, column_seed) * mix(0.82, 1.18, depth);
 float phase = matrix_hash(cell.x * 15.13 + 23.0) * period;
-float head_one = mod(matrix_time * speed + phase, period) - length;
-float row = 1.0 - (cell.y + 0.5) / matrix_rows;
+float primary_travel = animation_time * speed + phase;
+float primary_cycle = floor(primary_travel / period);
+float length = mix(0.28, 0.78, matrix_hash(
+    cell.x * 5.73 + primary_cycle * 61.7 + 19.0));
+float head_one = mod(primary_travel, period) - length;
+// Cogl texture coordinates increase from the top of the actor to the bottom.
+// The stream head also increases over time, so keep the row in that same
+// coordinate system: zero at the top and one at the bottom.
+float row = (cell.y + 0.5) / matrix_rows;
 float cell_height = 1.0 / matrix_rows;
-vec3 first_drop = matrix_drop(head_one, row, length, cell_height);
-float second_length = length * mix(0.58, 0.82,
-    matrix_hash(cell.x * 21.7 + 5.0));
-float head_two = mod(matrix_time * speed * 0.91 + phase + period * 0.53,
-    period) - second_length;
+// At 100% density most columns carry one stream and a small subset carry a
+// second. Higher values progressively add overlapping streams instead of
+// making 100% mean nearly two streams in every column.
+float primary_probability = min(stream_density * 0.72, 1.0);
+vec3 first_drop = matrix_drop(head_one, row, length, cell_height) *
+    step(1.0 - primary_probability,
+        matrix_hash(cell.x * 33.7 + 29.0));
+float second_travel = animation_time * speed * 0.91 +
+    phase + period * 0.53;
+float second_cycle = floor(second_travel / period);
+float second_length = mix(0.24, 0.70, matrix_hash(
+    cell.x * 21.7 + second_cycle * 73.9 + 5.0));
+float head_two = mod(second_travel, period) - second_length;
+float second_probability = clamp(
+    (stream_density - 0.75) * 0.70, 0.0, 0.70);
 vec3 second_drop = matrix_drop(head_two, row, second_length, cell_height) *
-    step(0.34, matrix_hash(cell.x * 27.1 + 13.0));
-vec3 rain = max(first_drop, second_drop);
+    step(1.0 - second_probability,
+        matrix_hash(cell.x * 27.1 + 13.0));
+vec3 third_drop = vec3(0.0);
+if (stream_density > 1.20) {
+    float third_travel = animation_time * speed * 1.08 +
+        phase + period * 0.79;
+    float third_cycle = floor(third_travel / period);
+    float third_length = mix(0.20, 0.62, matrix_hash(
+        cell.x * 37.3 + third_cycle * 89.3 + 17.0));
+    float head_three = mod(third_travel, period) - third_length;
+    float third_probability = clamp(
+        (stream_density - 1.20) * 0.80, 0.0, 0.64);
+    third_drop = matrix_drop(
+        head_three, row, third_length, cell_height) *
+        step(1.0 - third_probability,
+            matrix_hash(cell.x * 43.1 + 31.0));
+}
+vec3 rain = max(max(first_drop, second_drop), third_drop);
+
+// The original renderer used discrete intensity glyphs rather than one flat
+// green. Quantize the trail, retain a white leader, and add rare redraw glints.
+float depth_brightness = mix(0.58, 1.0, depth);
+rain.x = floor(clamp(rain.x, 0.0, 1.0) * 7.0 + 0.5) / 7.0;
+rain.x *= depth_brightness;
+float redraw_epoch = floor(animation_time * 1.35);
+float redraw_glint = step(0.965, matrix_hash(
+    cell_seed * 2.17 + redraw_epoch * 79.3));
+rain.z = max(rain.z, redraw_glint * rain.x * (1.0 - rain.y) * 0.72);
 
 float illumination = clamp(
     rain.x * 0.88 + rain.y * 0.78 + rain.z * 0.30,
@@ -110,17 +158,27 @@ color = mix(color, vec3(0.42, 1.0, 0.58), rain.z * 0.72);
 color = mix(color, cursor_green, rain.y);
 
 float halo = 0.0;
-if (matrix_glow > 0.5) {
+float neighbor_sum = 0.0;
+if (matrix_glow > 0.5 || matrix_soft_blur > 0.5) {
     float halo_offset = 2.25 / 64.0;
-    halo = max(halo, matrix_glyph_alpha(
-        glyph_index, glyph_local + vec2(halo_offset, 0.0)));
-    halo = max(halo, matrix_glyph_alpha(
-        glyph_index, glyph_local - vec2(halo_offset, 0.0)));
-    halo = max(halo, matrix_glyph_alpha(
-        glyph_index, glyph_local + vec2(0.0, halo_offset)));
-    halo = max(halo, matrix_glyph_alpha(
-        glyph_index, glyph_local - vec2(0.0, halo_offset)));
+    float neighbor_right = matrix_glyph_alpha(
+        glyph_index, glyph_local + vec2(halo_offset, 0.0));
+    float neighbor_left = matrix_glyph_alpha(
+        glyph_index, glyph_local - vec2(halo_offset, 0.0));
+    float neighbor_down = matrix_glyph_alpha(
+        glyph_index, glyph_local + vec2(0.0, halo_offset));
+    float neighbor_up = matrix_glyph_alpha(
+        glyph_index, glyph_local - vec2(0.0, halo_offset));
+    neighbor_sum = neighbor_right + neighbor_left +
+        neighbor_down + neighbor_up;
+    halo = max(max(neighbor_right, neighbor_left),
+        max(neighbor_down, neighbor_up));
     halo *= glyph_cell_mask;
+}
+
+if (matrix_soft_blur > 0.5) {
+    float softened_alpha = glyph_alpha * 0.40 + neighbor_sum * 0.15;
+    glyph_alpha = mix(glyph_alpha, softened_alpha, 0.72) * glyph_cell_mask;
 }
 
 float rain_strength = max(rain.x, max(rain.y, rain.z));
@@ -145,32 +203,49 @@ class MatrixIlluminationEffect extends Shell.GLSLEffect {
         this._glyphScaleLocation = this.get_uniform_location(
             'matrix_glyph_scale');
         this._opacityLocation = this.get_uniform_location('matrix_opacity');
+        this._speedLocation = this.get_uniform_location('matrix_speed');
+        this._streamDensityLocation = this.get_uniform_location(
+            'matrix_stream_density');
+        this._softBlurLocation = this.get_uniform_location(
+            'matrix_soft_blur');
         logEvent('shader-uniforms-ready', {
             columns: String(this._columnsLocation),
             glyphScale: String(this._glyphScaleLocation),
             glow: String(this._glowLocation),
             opacity: String(this._opacityLocation),
             rows: String(this._rowsLocation),
+            speed: String(this._speedLocation),
+            streamDensity: String(this._streamDensityLocation),
+            softBlur: String(this._softBlurLocation),
             time: String(this._timeLocation),
         });
     }
 
     vfunc_build_pipeline() {
         logEvent('shader-pipeline-build', {
-            direction: 'down-cogl-coordinates',
+            direction: 'top-to-bottom',
             atlasChannel: 'red',
             atlasColumns: GLYPH_ATLAS_COLUMNS,
             atlasRows: GLYPH_ATLAS_ROWS,
             glyphSequenceLength: GLYPH_SEQUENCE_LENGTH,
-            headsPerColumn: 2,
+            headsPerColumn: '1-3',
+            glyphSelection: 'procedural-per-cell-per-epoch',
+            precomposedField: false,
             sampling: 'dynamic-high-resolution-atlas',
+            trailLengthRange: '20-78 percent of monitor height',
         });
-        this.add_glsl_snippet(
-            Cogl.SnippetHook.FRAGMENT,
-            SHADER_DECLARATIONS,
-            SHADER_CODE,
-            true
-        );
+        try {
+            this.add_glsl_snippet(
+                Cogl.SnippetHook.FRAGMENT,
+                SHADER_DECLARATIONS,
+                SHADER_CODE,
+                true
+            );
+        } catch (error) {
+            this.set_enabled(false);
+            notifyRendererFailure(error);
+            throw error;
+        }
     }
 
     setGridGeometry(columns, rows, monitorWidth, monitorHeight) {
@@ -201,6 +276,23 @@ class MatrixIlluminationEffect extends Shell.GLSLEffect {
         this.queue_repaint();
     }
 
+    setSpeed(percentage) {
+        this.set_uniform_float(this._speedLocation, 1, [percentage / 100]);
+        this.queue_repaint();
+    }
+
+    setStreamDensity(percentage) {
+        this.set_uniform_float(
+            this._streamDensityLocation, 1, [percentage / 100]);
+        this.queue_repaint();
+    }
+
+    setSoftBlurEnabled(enabled) {
+        this.set_uniform_float(
+            this._softBlurLocation, 1, [enabled ? 1 : 0]);
+        this.queue_repaint();
+    }
+
     setTime(seconds) {
         this.set_uniform_float(this._timeLocation, 1, [seconds]);
         this.queue_repaint();
@@ -208,8 +300,8 @@ class MatrixIlluminationEffect extends Shell.GLSLEffect {
 });
 
 class MonitorRain {
-    constructor(index, monitor, fontSize, glyphScale, glowEnabled, effectOpacity,
-        glyphImage) {
+    constructor(index, monitor, fontSize, glyphScale, rainSpeed, streamDensity,
+        glowEnabled, softBlurEnabled, effectOpacity, glyphImage) {
         this._index = index;
         this._actor = new Clutter.Actor({
             clip_to_allocation: true,
@@ -219,8 +311,6 @@ class MonitorRain {
             x: monitor.x,
             y: monitor.y,
         });
-        Main.layoutManager._backgroundGroup.add_child(this._actor);
-
         const glyphWidth = Math.max(6, fontSize * 0.68);
         const columnCount = Math.ceil(monitor.width / glyphWidth);
         const rowCount = Math.ceil(monitor.height / fontSize) + 1;
@@ -233,13 +323,19 @@ class MonitorRain {
         });
         this._actor.add_child(grid);
 
-        this._effect = new MatrixIlluminationEffect({name: 'matrix-rain-v12'});
+        this._effect = new MatrixIlluminationEffect({
+            name: 'matrix-rain-effect',
+        });
         grid.add_effect(this._effect);
         this._effect.setGridGeometry(
             columnCount, rowCount, monitor.width, monitor.height);
         this._effect.setGlyphScale(glyphScale);
+        this._effect.setSpeed(rainSpeed);
+        this._effect.setStreamDensity(streamDensity);
         this._effect.setGlowEnabled(glowEnabled);
+        this._effect.setSoftBlurEnabled(softBlurEnabled);
         this.setEffectOpacity(effectOpacity);
+        Main.layoutManager._backgroundGroup.add_child(this._actor);
         logEvent('monitor-ready', {
             backgroundDimming: false,
             columns: columnCount,
@@ -250,10 +346,22 @@ class MonitorRain {
             height: monitor.height,
             index,
             opacity: effectOpacity,
+            rainSpeed,
             rows: rowCount,
+            softBlurEnabled,
+            streamDensity,
             width: monitor.width,
             x: monitor.x,
             y: monitor.y,
+        });
+    }
+
+    setGlyphScale(percentage) {
+        this._effect.setGlyphScale(percentage);
+        logEvent('monitor-glyph-scale-set', {
+            index: this._index,
+            percentage,
+            shaderScale: percentage / 100,
         });
     }
 
@@ -271,12 +379,34 @@ class MonitorRain {
         });
     }
 
+    setSpeed(percentage) {
+        this._effect.setSpeed(percentage);
+        logEvent('monitor-speed-set', {
+            index: this._index,
+            percentage,
+            shaderSpeed: percentage / 100,
+        });
+    }
+
+    setStreamDensity(percentage) {
+        this._effect.setStreamDensity(percentage);
+        logEvent('monitor-stream-density-set', {
+            index: this._index,
+            percentage,
+            shaderDensity: percentage / 100,
+        });
+    }
+
+    setSoftBlurEnabled(enabled) {
+        this._effect.setSoftBlurEnabled(enabled);
+        logEvent('monitor-soft-blur-set', {enabled, index: this._index});
+    }
+
     tick(seconds) {
         if (!this._actor.is_mapped())
-            return false;
+            return;
 
         this._effect.setTime(seconds);
-        return true;
     }
 
     destroy() {
@@ -296,7 +426,7 @@ export class MatrixRain {
             'assets',
             'matrixcode_mask_rgb.png',
         ]);
-        logEvent('renderer-start', {atlasPath, extensionPath, version: 12});
+        logEvent('renderer-start', {atlasPath, extensionPath});
 
         const glyphPixbuf = GdkPixbuf.Pixbuf.new_from_file(atlasPath);
         const channelCount = glyphPixbuf.get_n_channels();
@@ -336,6 +466,7 @@ export class MatrixRain {
             sharedAcrossMonitors: true,
         });
         this._monitorRains = [];
+        this._rebuildMonitors();
         this._monitorsChangedId = Main.layoutManager.connect(
             'monitors-changed', () => {
                 logEvent('monitors-changed');
@@ -357,34 +488,29 @@ export class MatrixRain {
             'changed::effect-opacity', () => {
                 this._syncSettings('signal:effect-opacity');
             });
-        this._rebuildMonitors();
-
+        this._rainSpeedChangedId = this._settings.connect(
+            'changed::rain-speed', () => {
+                this._syncSettings('signal:rain-speed');
+            });
+        this._streamDensityChangedId = this._settings.connect(
+            'changed::stream-density', () => {
+                this._syncSettings('signal:stream-density');
+            });
+        this._softBlurChangedId = this._settings.connect(
+            'changed::soft-blur-enabled', () => {
+                this._syncSettings('signal:soft-blur-enabled');
+            });
         const startTime = GLib.get_monotonic_time();
         this._animationSourceId = GLib.timeout_add(
             GLib.PRIORITY_LOW, FRAME_INTERVAL_MS, () => {
                 const elapsed = (GLib.get_monotonic_time() - startTime) /
                     1000000;
-                let mappedMonitors = 0;
-
-                for (const monitorRain of this._monitorRains) {
-                    if (monitorRain.tick(elapsed % 4096))
-                        mappedMonitors++;
-                }
+                for (const monitorRain of this._monitorRains)
+                    monitorRain.tick(elapsed % 4096);
 
                 this._frameCount++;
                 if (this._frameCount % SETTINGS_POLL_FRAME_INTERVAL === 0)
                     this._syncSettings('poll');
-
-                if (this._frameCount <= 3 ||
-                    this._frameCount % HEARTBEAT_FRAME_INTERVAL === 0) {
-                    logEvent('animation-heartbeat', {
-                        elapsedSeconds: Math.round(elapsed * 100) / 100,
-                        frame: this._frameCount,
-                        mappedMonitors,
-                        monitorCount: this._monitorRains.length,
-                        settings: this._settingsSnapshot,
-                    });
-                }
 
                 return GLib.SOURCE_CONTINUE;
             });
@@ -397,11 +523,18 @@ export class MatrixRain {
         const glyphScale = this._settings.get_double('glyph-scale');
         const glowEnabled = this._settings.get_boolean('glow-enabled');
         const effectOpacity = this._settings.get_double('effect-opacity');
+        const rainSpeed = this._settings.get_double('rain-speed');
+        const streamDensity = this._settings.get_double('stream-density');
+        const softBlurEnabled = this._settings.get_boolean(
+            'soft-blur-enabled');
         this._settingsSnapshot = {
             effectOpacity,
             fontSize,
             glyphScale,
             glowEnabled,
+            rainSpeed,
+            softBlurEnabled,
+            streamDensity,
         };
         logEvent('monitors-rebuild-start', {
             effectOpacity,
@@ -409,21 +542,37 @@ export class MatrixRain {
             glyphScale,
             glowEnabled,
             monitorCount: Main.layoutManager.monitors.length,
+            rainSpeed,
+            softBlurEnabled,
+            streamDensity,
         });
+
+        const replacements = [];
+        try {
+            for (const [index, monitor] of
+                Main.layoutManager.monitors.entries()) {
+                replacements.push(new MonitorRain(
+                    index,
+                    monitor,
+                    fontSize,
+                    glyphScale,
+                    rainSpeed,
+                    streamDensity,
+                    glowEnabled,
+                    softBlurEnabled,
+                    effectOpacity,
+                    this._glyphImage
+                ));
+            }
+        } catch (error) {
+            for (const monitorRain of replacements)
+                monitorRain.destroy();
+            throw error;
+        }
 
         for (const monitorRain of this._monitorRains)
             monitorRain.destroy();
-
-        this._monitorRains = Main.layoutManager.monitors.map(
-            (monitor, index) => new MonitorRain(
-                index,
-                monitor,
-                fontSize,
-                glyphScale,
-                glowEnabled,
-                effectOpacity,
-                this._glyphImage
-            ));
+        this._monitorRains = replacements;
         logEvent('monitors-rebuild-complete', {
             monitorCount: this._monitorRains.length,
         });
@@ -435,18 +584,44 @@ export class MatrixRain {
             fontSize: this._settings.get_double('font-size'),
             glyphScale: this._settings.get_double('glyph-scale'),
             glowEnabled: this._settings.get_boolean('glow-enabled'),
+            rainSpeed: this._settings.get_double('rain-speed'),
+            softBlurEnabled: this._settings.get_boolean('soft-blur-enabled'),
+            streamDensity: this._settings.get_double('stream-density'),
         };
         const previous = this._settingsSnapshot;
+        const geometryUnchanged = previous &&
+            previous.fontSize === next.fontSize;
 
-        if (previous &&
+        if (geometryUnchanged &&
             previous.effectOpacity === next.effectOpacity &&
-            previous.fontSize === next.fontSize &&
             previous.glyphScale === next.glyphScale &&
-            previous.glowEnabled === next.glowEnabled)
+            previous.glowEnabled === next.glowEnabled &&
+            previous.rainSpeed === next.rainSpeed &&
+            previous.softBlurEnabled === next.softBlurEnabled &&
+            previous.streamDensity === next.streamDensity)
             return;
 
         this._settingsSnapshot = next;
         logEvent('settings-synchronized', {next, previous, source});
+
+        if (geometryUnchanged) {
+            for (const monitorRain of this._monitorRains) {
+                if (previous.effectOpacity !== next.effectOpacity)
+                    monitorRain.setEffectOpacity(next.effectOpacity);
+                if (previous.glyphScale !== next.glyphScale)
+                    monitorRain.setGlyphScale(next.glyphScale);
+                if (previous.glowEnabled !== next.glowEnabled)
+                    monitorRain.setGlowEnabled(next.glowEnabled);
+                if (previous.rainSpeed !== next.rainSpeed)
+                    monitorRain.setSpeed(next.rainSpeed);
+                if (previous.streamDensity !== next.streamDensity)
+                    monitorRain.setStreamDensity(next.streamDensity);
+                if (previous.softBlurEnabled !== next.softBlurEnabled)
+                    monitorRain.setSoftBlurEnabled(next.softBlurEnabled);
+            }
+            return;
+        }
+
         this._rebuildMonitors();
     }
 
@@ -472,6 +647,15 @@ export class MatrixRain {
 
         this._settings.disconnect(this._opacityChangedId);
         this._opacityChangedId = null;
+
+        this._settings.disconnect(this._rainSpeedChangedId);
+        this._rainSpeedChangedId = null;
+
+        this._settings.disconnect(this._streamDensityChangedId);
+        this._streamDensityChangedId = null;
+
+        this._settings.disconnect(this._softBlurChangedId);
+        this._softBlurChangedId = null;
 
         for (const monitorRain of this._monitorRains)
             monitorRain.destroy();

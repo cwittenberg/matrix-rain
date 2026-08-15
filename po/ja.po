@@ -1,0 +1,152 @@
+# Japanese translations for Matrix Code Rain package.
+# Copyright (C) 2026 Christian Wittenberg
+# This file is distributed under the same license as the Matrix Code Rain package.
+# Automatically generated, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Matrix Code Rain 20\n"
+"Report-Msgid-Bugs-To: https://github.com/cwittenberg/matrix-rain/issues\n"
+"POT-Creation-Date: 2026-08-15 02:17+0200\n"
+"PO-Revision-Date: 2026-08-15 02:17+0200\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: prefs.js:112
+msgid "Appearance"
+msgstr "外観"
+
+#: prefs.js:116
+msgid "Code Rain"
+msgstr "コードレイン"
+
+#: prefs.js:117
+msgid "Tune the rain for your display setup."
+msgstr "ディスプレイ環境に合わせてコードレインを調整します。"
+
+#: prefs.js:125
+msgid "Phosphor glow"
+msgstr "蛍光体のグロー"
+
+#: prefs.js:126
+msgid "Add a single-pass halo."
+msgstr "1 パスのハローを追加します。"
+
+#: prefs.js:132
+msgid "Soft anti-aliasing"
+msgstr "ソフトアンチエイリアス"
+
+#: prefs.js:133
+msgid "Blend adjacent glyph samples for a softer cinematic bloom."
+msgstr "隣接するグリフのサンプルを合成し、映画のような柔らかなブルームを加えます。"
+
+#: prefs.js:137
+msgid "Font size"
+msgstr "フォントサイズ"
+
+#: prefs.js:138
+msgid "Larger glyphs use fewer columns and fewer compositor resources."
+msgstr "グリフを大きくすると列数が減り、コンポジターの使用リソースも減少します。"
+
+#: prefs.js:146
+msgid "Glyph scale"
+msgstr "グリフのスケール"
+
+#: prefs.js:147
+msgid "Set the actual percentage of each grid cell filled by its symbol."
+msgstr "各グリッドセル内で記号が占める実際の割合を設定します。"
+
+#: prefs.js:155
+msgid "Rain speed"
+msgstr "降下速度"
+
+#: prefs.js:156
+msgid "Control how quickly streams fall and glyphs change."
+msgstr "ストリームの降下速度とグリフの変化速度を調整します。"
+
+#: prefs.js:164
+msgid "Stream density"
+msgstr "ストリーム密度"
+
+#: prefs.js:165
+msgid "Increase or reduce the number of independent code streams."
+msgstr "独立したコードストリームの数を増減します。"
+
+#: prefs.js:173
+msgid "Transparency"
+msgstr "透明度"
+
+#: prefs.js:174
+msgid "Lower this for a subtle effect over the desktop."
+msgstr "値を下げると、デスクトップ上の効果が控えめになります。"
+
+#: prefs.js:186
+msgid "About"
+msgstr "この拡張機能について"
+
+#: prefs.js:192
+msgid "Matrix Code Rain"
+msgstr "Matrix コードレイン"
+
+#: metadata.json:3
+msgid ""
+"Matrix animated green code rain behind your windows on every workspace and "
+"monitor.\n"
+"\n"
+"Requires a GPU to run."
+msgstr ""
+"すべてのワークスペースとモニターで、ウィンドウの背後に Matrix 風の緑色のコードレインを表示します。\n"
+"\n"
+"実行には GPU が必要です。"
+
+#: prefs.js:193
+msgid "Matrix-style animated code rain for the GNOME desktop."
+msgstr "GNOME デスクトップ向けの Matrix 風アニメーションコードレインです。"
+
+#: prefs.js:205
+msgid "Buy me a coffee ☕"
+msgstr "コーヒーをおごる ☕"
+
+#: prefs.js:210
+msgid "Report a Bug 🐞"
+msgstr "バグを報告 🐞"
+
+#: prefs.js:214
+msgid "Request a Feature 💡"
+msgstr "機能をリクエスト 💡"
+
+#: prefs.js:220
+msgid "Developer"
+msgstr "開発者"
+
+#: prefs.js:223
+msgid "Local / EGO (Auto-injected)"
+msgstr "ローカル / EGO（自動挿入）"
+
+#: prefs.js:227
+msgid "Version"
+msgstr "バージョン"
+
+#: prefs.js:231
+msgid "Graphics requirement"
+msgstr "グラフィックス要件"
+
+#: prefs.js:232
+msgid ""
+"Requires an OpenGL-capable compositor; CPU-only rendering is not supported."
+msgstr "OpenGL 対応のコンポジターが必要です。CPU のみのレンダリングには対応していません。"
+
+#: shell/errorNotification.js:13
+msgid "Matrix Code could not start"
+msgstr "Matrix コードを開始できませんでした"
+
+#: shell/errorNotification.js:14
+msgid ""
+"GNOME could not create the required OpenGL effect. This is likely because "
+"your system has no GPU or lacks the required OpenGL support."
+msgstr "GNOME は必要な OpenGL エフェクトを作成できませんでした。システムに GPU がないか、必要な OpenGL サポートがない可能性があります。"

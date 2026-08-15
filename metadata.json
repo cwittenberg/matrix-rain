@@ -1,8 +1,11 @@
 {
   "name": "Matrix Code Rain",
-  "description": "Matrix-style animated green code rain behind your windows on every workspace and monitor.",
+  "description": "Matrix animated green code rain behind your windows on every workspace and monitor.\n\nRequires a GPU to run.",
   "uuid": "matrix-rain@cwittenberg",
-  "version": 12,
+  "url": "https://github.com/cwittenberg/matrix-rain",
+  "donations": {"kofi": "cwittenberg"},
+  "gettext-domain": "matrix-rain@cwittenberg",
+  "version": 20,
   "shell-version": ["50"],
-  "settings-schema": "org.gnome.shell.extensions.matrix-rain.v2"
+  "settings-schema": "org.gnome.shell.extensions.matrix-rain.v5"
 }

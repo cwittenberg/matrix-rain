@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.matrix-rain.v5" path="/org/gnome/shell/extensions/matrix-rain-v5/">
+    <key name="glow-enabled" type="b">
+      <default>true</default>
+      <summary>Enable phosphor glow</summary>
+      <description>Add one lightweight subpixel halo around moving glyphs.</description>
+    </key>
+    <key name="soft-blur-enabled" type="b">
+      <default>false</default>
+      <summary>Enable soft glyph anti-aliasing</summary>
+      <description>Blend adjacent glyph samples to soften edges and add cinematic bloom.</description>
+    </key>
+    <key name="font-size" type="d">
+      <default>30.0</default>
+      <range min="10.0" max="32.0"/>
+      <summary>Code rain font size</summary>
+      <description>The glyph size in logical pixels.</description>
+    </key>
+    <key name="glyph-scale" type="d">
+      <default>80.0</default>
+      <range min="50.0" max="100.0"/>
+      <summary>Glyph scale within each grid cell</summary>
+      <description>The literal percentage of each grid cell occupied by its glyph.</description>
+    </key>
+    <key name="rain-speed" type="d">
+      <default>133.0</default>
+      <range min="25.0" max="200.0"/>
+      <summary>Code rain animation speed</summary>
+      <description>The animation speed as a percentage of normal speed.</description>
+    </key>
+    <key name="stream-density" type="d">
+      <default>150.0</default>
+      <range min="25.0" max="200.0"/>
+      <summary>Number of independent code streams</summary>
+      <description>The number of streams as a percentage of normal density.</description>
+    </key>
+    <key name="effect-opacity" type="d">
+      <default>95.0</default>
+      <range min="10.0" max="100.0"/>
+      <summary>Code rain opacity</summary>
+      <description>The opacity percentage of the complete Matrix effect.</description>
+    </key>
+  </schema>
+</schemalist>
