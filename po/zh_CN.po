@@ -108,16 +108,16 @@ msgid "Matrix-style animated code rain for the GNOME desktop."
 msgstr "GNOME 桌面的 Matrix 风格动态代码雨。"
 
 #: prefs.js:205
-msgid "Buy me a coffee ☕"
-msgstr "请我喝杯咖啡 ☕"
+msgid "Buy me a coffee"
+msgstr "请我喝杯咖啡"
 
 #: prefs.js:210
-msgid "Report a Bug 🐞"
-msgstr "报告问题 🐞"
+msgid "Report a Bug"
+msgstr "报告问题"
 
 #: prefs.js:214
-msgid "Request a Feature 💡"
-msgstr "请求新功能 💡"
+msgid "Request a Feature"
+msgstr "请求新功能"
 
 #: prefs.js:220
 msgid "Developer"

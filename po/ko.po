@@ -109,16 +109,16 @@ msgid "Matrix-style animated code rain for the GNOME desktop."
 msgstr "GNOME 데스크톱을 위한 Matrix 스타일의 움직이는 코드 레인입니다."
 
 #: prefs.js:205
-msgid "Buy me a coffee ☕"
-msgstr "커피 한 잔 사주기 ☕"
+msgid "Buy me a coffee"
+msgstr "커피 한 잔 사주기"
 
 #: prefs.js:210
-msgid "Report a Bug 🐞"
-msgstr "버그 신고 🐞"
+msgid "Report a Bug"
+msgstr "버그 신고"
 
 #: prefs.js:214
-msgid "Request a Feature 💡"
-msgstr "기능 요청 💡"
+msgid "Request a Feature"
+msgstr "기능 요청"
 
 #: prefs.js:220
 msgid "Developer"

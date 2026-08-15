@@ -110,16 +110,16 @@ msgid "Matrix-style animated code rain for the GNOME desktop."
 msgstr "Lluvia animada de código estilo Matrix para el escritorio GNOME."
 
 #: prefs.js:205
-msgid "Buy me a coffee ☕"
-msgstr "Invítame a un café ☕"
+msgid "Buy me a coffee"
+msgstr "Invítame a un café"
 
 #: prefs.js:210
-msgid "Report a Bug 🐞"
-msgstr "Informar de un error 🐞"
+msgid "Report a Bug"
+msgstr "Informar de un error"
 
 #: prefs.js:214
-msgid "Request a Feature 💡"
-msgstr "Solicitar una función 💡"
+msgid "Request a Feature"
+msgstr "Solicitar una función"
 
 #: prefs.js:220
 msgid "Developer"

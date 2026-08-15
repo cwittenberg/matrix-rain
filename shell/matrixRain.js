@@ -467,39 +467,35 @@ export class MatrixRain {
         });
         this._monitorRains = [];
         this._rebuildMonitors();
-        this._monitorsChangedId = Main.layoutManager.connect(
+        Main.layoutManager.connectObject(
             'monitors-changed', () => {
                 logEvent('monitors-changed');
                 this._rebuildMonitors();
-            });
-        this._fontSizeChangedId = this._settings.connect(
+            }, this);
+        this._settings.connectObject(
             'changed::font-size', () => {
                 this._syncSettings('signal:font-size');
-            });
-        this._glyphScaleChangedId = this._settings.connect(
+            },
             'changed::glyph-scale', () => {
                 this._syncSettings('signal:glyph-scale');
-            });
-        this._glowChangedId = this._settings.connect(
+            },
             'changed::glow-enabled', () => {
                 this._syncSettings('signal:glow-enabled');
-            });
-        this._opacityChangedId = this._settings.connect(
+            },
             'changed::effect-opacity', () => {
                 this._syncSettings('signal:effect-opacity');
-            });
-        this._rainSpeedChangedId = this._settings.connect(
+            },
             'changed::rain-speed', () => {
                 this._syncSettings('signal:rain-speed');
-            });
-        this._streamDensityChangedId = this._settings.connect(
+            },
             'changed::stream-density', () => {
                 this._syncSettings('signal:stream-density');
-            });
-        this._softBlurChangedId = this._settings.connect(
+            },
             'changed::soft-blur-enabled', () => {
                 this._syncSettings('signal:soft-blur-enabled');
-            });
+            },
+            this
+        );
         const startTime = GLib.get_monotonic_time();
         this._animationSourceId = GLib.timeout_add(
             GLib.PRIORITY_LOW, FRAME_INTERVAL_MS, () => {
@@ -633,29 +629,8 @@ export class MatrixRain {
         GLib.Source.remove(this._animationSourceId);
         this._animationSourceId = null;
 
-        Main.layoutManager.disconnect(this._monitorsChangedId);
-        this._monitorsChangedId = null;
-
-        this._settings.disconnect(this._fontSizeChangedId);
-        this._fontSizeChangedId = null;
-
-        this._settings.disconnect(this._glyphScaleChangedId);
-        this._glyphScaleChangedId = null;
-
-        this._settings.disconnect(this._glowChangedId);
-        this._glowChangedId = null;
-
-        this._settings.disconnect(this._opacityChangedId);
-        this._opacityChangedId = null;
-
-        this._settings.disconnect(this._rainSpeedChangedId);
-        this._rainSpeedChangedId = null;
-
-        this._settings.disconnect(this._streamDensityChangedId);
-        this._streamDensityChangedId = null;
-
-        this._settings.disconnect(this._softBlurChangedId);
-        this._softBlurChangedId = null;
+        Main.layoutManager.disconnectObject(this);
+        this._settings.disconnectObject(this);
 
         for (const monitorRain of this._monitorRains)
             monitorRain.destroy();

@@ -10,18 +10,15 @@ import {
 const PROJECT_URL = 'https://github.com/cwittenberg/matrix-rain';
 
 function createLinkButton(title, uri, styleClass = null) {
-    const button = new Gtk.Button({
+    const button = new Gtk.LinkButton({
         label: title,
         hexpand: true,
+        uri,
         valign: Gtk.Align.CENTER,
     });
 
     if (styleClass)
         button.add_css_class(styleClass);
-
-    button.connect('clicked', () => {
-        Gio.AppInfo.launch_default_for_uri(uri, null);
-    });
 
     return button;
 }
@@ -33,26 +30,7 @@ function addSwitchSetting(settings, group, key, title, subtitle) {
         subtitle,
     });
     group.add(row);
-    row.connect('notify::active', () => {
-        const value = row.active;
-        if (settings.get_boolean(key) === value)
-            return;
-
-        const written = settings.set_boolean(key, value);
-        Gio.Settings.sync();
-        console.log(`[matrix-rain] ${JSON.stringify({
-            event: 'prefs-setting-written',
-            key,
-            value,
-            written,
-        })}`);
-    });
     settings.bind(key, row, 'active', Gio.SettingsBindFlags.DEFAULT);
-    console.log(`[matrix-rain] ${JSON.stringify({
-        event: 'prefs-switch-ready',
-        key,
-        value: settings.get_boolean(key),
-    })}`);
 }
 
 function addScaleSetting(settings, group, options) {
@@ -85,26 +63,9 @@ function addScaleSetting(settings, group, options) {
     scale.connect('value-changed', () => {
         const value = scale.get_value();
         valueLabel.label = `${Math.round(value)}${options.unit}`;
-        if (Math.abs(settings.get_double(options.key) - value) < 0.001)
-            return;
-
-        const written = settings.set_double(options.key, value);
-        Gio.Settings.sync();
-        console.log(`[matrix-rain] ${JSON.stringify({
-            event: 'prefs-setting-written',
-            key: options.key,
-            value,
-            written,
-        })}`);
     });
     settings.bind(
         options.key, scale, 'value', Gio.SettingsBindFlags.DEFAULT);
-    console.log(`[matrix-rain] ${JSON.stringify({
-        event: 'prefs-scale-ready',
-        key: options.key,
-        value: settings.get_double(options.key),
-        widget: 'Gtk.Scale',
-    })}`);
 }
 
 function buildAppearancePage(settings) {
@@ -202,16 +163,16 @@ function buildAboutPage(prefs) {
         margin_bottom: 16,
     });
     linkBox.append(createLinkButton(
-        _('Buy me a coffee ☕'),
+        _('Buy me a coffee'),
         'https://ko-fi.com/cwittenberg',
         'suggested-action'
     ));
     linkBox.append(createLinkButton(
-        _('Report a Bug 🐞'),
+        _('Report a Bug'),
         `${PROJECT_URL}/issues/new?template=bug_report.md`
     ));
     linkBox.append(createLinkButton(
-        _('Request a Feature 💡'),
+        _('Request a Feature'),
         `${PROJECT_URL}/issues/new?template=feature_request.md`
     ));
     group.add(linkBox);
@@ -238,11 +199,9 @@ function buildAboutPage(prefs) {
 
 export default class MatrixRainPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
-        console.log('[matrix-rain] {"event":"prefs-start"}');
         window.set_default_size(720, 620);
         window._settings = this.getSettings();
         window.add(buildAppearancePage(window._settings));
         window.add(buildAboutPage(this));
-        console.log('[matrix-rain] {"event":"prefs-complete"}');
     }
 }

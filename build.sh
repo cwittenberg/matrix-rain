@@ -59,7 +59,7 @@ build_bundle() (
     cp -- "$PROJECT_DIR/THIRD_PARTY.md" "$staging_dir/"
     cp -- "$PROJECT_DIR/assets/matrixcode_mask_rgb.png" \
         "$staging_dir/assets/"
-    cp -- "$PROJECT_DIR/schemas/org.gnome.shell.extensions.matrix-rain.v5.gschema.xml" \
+    cp -- "$PROJECT_DIR/schemas/org.gnome.shell.extensions.matrix-rain.gschema.xml" \
         "$staging_dir/schemas/"
     cp -R -- "$PROJECT_DIR/shell" "$staging_dir/"
     cp -R -- "$PROJECT_DIR/po" "$staging_dir/"

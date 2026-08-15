@@ -7,5 +7,5 @@
   "gettext-domain": "matrix-rain@cwittenberg",
   "version": 20,
   "shell-version": ["50"],
-  "settings-schema": "org.gnome.shell.extensions.matrix-rain.v5"
+  "settings-schema": "org.gnome.shell.extensions.matrix-rain"
 }
