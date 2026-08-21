@@ -65,7 +65,11 @@ function addScaleSetting(settings, group, options) {
         valueLabel.label = `${Math.round(value)}${options.unit}`;
     });
     settings.bind(
-        options.key, scale, 'value', Gio.SettingsBindFlags.DEFAULT);
+        options.key,
+        scale.get_adjustment(),
+        'value',
+        Gio.SettingsBindFlags.DEFAULT
+    );
 }
 
 function buildAppearancePage(settings) {
