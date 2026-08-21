@@ -5,6 +5,8 @@ For those still love this movie, here is a way to turn your GNOME desktops into 
 Bring the classic digital rain to your Linux workspace. **Matrix Code Rain** renders animated, falling green code directly behind your windows, across every workspace and monitor.
 Does require a GPU to run. CPU-only is not supported.
 
+You can install the extension here via Gnome extension store: https://extensions.gnome.org/extension/10708/matrix-code-rain
+
 <img width="1575" height="1074" alt="smaller" src="https://github.com/user-attachments/assets/604186e2-f495-4362-9efc-2248ea6f5711" />
 
 
