@@ -7,8 +7,7 @@ Does require a GPU to run. CPU-only is not supported.
 
 You can install the extension here via Gnome extension store: https://extensions.gnome.org/extension/10708/matrix-code-rain
 
-<img width="1575" height="1074" alt="smaller" src="https://github.com/user-attachments/assets/604186e2-f495-4362-9efc-2248ea6f5711" />
-
+https://github.com/user-attachments/assets/5dcd52c7-0767-4c17-bcdb-c70cf6ab6b7d
 
 ---
 
