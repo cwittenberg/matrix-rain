@@ -23,7 +23,7 @@ https://github.com/user-attachments/assets/5dcd52c7-0767-4c17-bcdb-c70cf6ab6b7d
 
 ## Requirements
 
-* **GNOME Shell:** Version 50.
+* **GNOME Shell:** Version 50 or 51.
 * **Hardware:** An OpenGL-capable GPU. CPU-only rendering is not supported due to efficiency requirements.
 
 ---
