@@ -191,113 +191,164 @@ color *= 1.0 - dither;
 cogl_color_out = vec4(color * output_alpha, output_alpha);
 `;
 
-const MatrixIlluminationEffect = GObject.registerClass(
-class MatrixIlluminationEffect extends Shell.GLSLEffect {
-    _init(params) {
-        super._init(params);
+const UNIFORM_NAMES = [
+    'matrix_time',
+    'matrix_columns',
+    'matrix_rows',
+    'matrix_glow',
+    'matrix_glyph_scale',
+    'matrix_opacity',
+    'matrix_speed',
+    'matrix_stream_density',
+    'matrix_soft_blur',
+];
 
-        this._timeLocation = this.get_uniform_location('matrix_time');
-        this._columnsLocation = this.get_uniform_location('matrix_columns');
-        this._rowsLocation = this.get_uniform_location('matrix_rows');
-        this._glowLocation = this.get_uniform_location('matrix_glow');
-        this._glyphScaleLocation = this.get_uniform_location(
-            'matrix_glyph_scale');
-        this._opacityLocation = this.get_uniform_location('matrix_opacity');
-        this._speedLocation = this.get_uniform_location('matrix_speed');
-        this._streamDensityLocation = this.get_uniform_location(
-            'matrix_stream_density');
-        this._softBlurLocation = this.get_uniform_location(
-            'matrix_soft_blur');
-        logEvent('shader-uniforms-ready', {
-            columns: String(this._columnsLocation),
-            glyphScale: String(this._glyphScaleLocation),
-            glow: String(this._glowLocation),
-            opacity: String(this._opacityLocation),
-            rows: String(this._rowsLocation),
-            speed: String(this._speedLocation),
-            streamDensity: String(this._streamDensityLocation),
-            softBlur: String(this._softBlurLocation),
-            time: String(this._timeLocation),
-        });
-    }
+// GNOME Shell 51 removed Shell.GLSLEffect in favour of the snippet-based
+// Clutter.ShaderEffect. GNOME Shell 50 still ships Shell.GLSLEffect, while its
+// Clutter.ShaderEffect has the old, incompatible source-string API. Pick the
+// implementation at runtime so one bundle supports both shell versions.
+const USE_LEGACY_GLSL_EFFECT = Shell.GLSLEffect !== undefined;
 
-    vfunc_build_pipeline() {
-        logEvent('shader-pipeline-build', {
-            direction: 'top-to-bottom',
-            atlasChannel: 'red',
-            atlasColumns: GLYPH_ATLAS_COLUMNS,
-            atlasRows: GLYPH_ATLAS_ROWS,
-            glyphSequenceLength: GLYPH_SEQUENCE_LENGTH,
-            headsPerColumn: '1-3',
-            glyphSelection: 'procedural-per-cell-per-epoch',
-            precomposedField: false,
-            sampling: 'dynamic-high-resolution-atlas',
-            trailLengthRange: '20-78 percent of monitor height',
-        });
-        try {
-            this.add_glsl_snippet(
-                Cogl.SnippetHook.FRAGMENT,
-                SHADER_DECLARATIONS,
-                SHADER_CODE,
-                true
-            );
-        } catch (error) {
-            this.set_enabled(false);
-            notifyRendererFailure(error);
-            throw error;
-        }
-    }
+function logPipelineBuild(backend) {
+    logEvent('shader-pipeline-build', {
+        backend,
+        direction: 'top-to-bottom',
+        atlasChannel: 'red',
+        atlasColumns: GLYPH_ATLAS_COLUMNS,
+        atlasRows: GLYPH_ATLAS_ROWS,
+        glyphSequenceLength: GLYPH_SEQUENCE_LENGTH,
+        headsPerColumn: '1-3',
+        glyphSelection: 'procedural-per-cell-per-epoch',
+        precomposedField: false,
+        sampling: 'dynamic-high-resolution-atlas',
+        trailLengthRange: '20-78 percent of monitor height',
+    });
+}
 
+// Shared by both implementations; each provides _setUniform(name, value).
+const MatrixEffectMethods = {
     setGridGeometry(columns, rows, monitorWidth, monitorHeight) {
-        this.set_uniform_float(this._columnsLocation, 1, [columns]);
-        this.set_uniform_float(this._rowsLocation, 1, [rows]);
+        this._setUniform('matrix_columns', columns);
+        this._setUniform('matrix_rows', rows);
         logEvent('shader-grid-set', {
             columns,
             monitorHeight,
             monitorWidth,
             rows,
         });
-    }
+    },
 
     setGlowEnabled(enabled) {
-        this.set_uniform_float(this._glowLocation, 1, [enabled ? 1 : 0]);
+        this._setUniform('matrix_glow', enabled ? 1 : 0);
         this.queue_repaint();
-    }
+    },
 
     setGlyphScale(percentage) {
-        this.set_uniform_float(
-            this._glyphScaleLocation, 1, [percentage / 100]);
+        this._setUniform('matrix_glyph_scale', percentage / 100);
         this.queue_repaint();
-    }
+    },
 
     setEffectOpacity(percentage) {
-        this.set_uniform_float(
-            this._opacityLocation, 1, [percentage / 100]);
+        this._setUniform('matrix_opacity', percentage / 100);
         this.queue_repaint();
-    }
+    },
 
     setSpeed(percentage) {
-        this.set_uniform_float(this._speedLocation, 1, [percentage / 100]);
+        this._setUniform('matrix_speed', percentage / 100);
         this.queue_repaint();
-    }
+    },
 
     setStreamDensity(percentage) {
-        this.set_uniform_float(
-            this._streamDensityLocation, 1, [percentage / 100]);
+        this._setUniform('matrix_stream_density', percentage / 100);
         this.queue_repaint();
-    }
+    },
 
     setSoftBlurEnabled(enabled) {
-        this.set_uniform_float(
-            this._softBlurLocation, 1, [enabled ? 1 : 0]);
+        this._setUniform('matrix_soft_blur', enabled ? 1 : 0);
         this.queue_repaint();
-    }
+    },
 
     setTime(seconds) {
-        this.set_uniform_float(this._timeLocation, 1, [seconds]);
+        this._setUniform('matrix_time', seconds);
         this.queue_repaint();
-    }
-});
+    },
+};
+
+function defineLegacyEffect() {
+    const LegacyEffect = GObject.registerClass(
+    class MatrixIlluminationLegacyEffect extends Shell.GLSLEffect {
+        _init(params) {
+            super._init(params);
+
+            this._uniformLocations = new Map();
+            for (const name of UNIFORM_NAMES) {
+                this._uniformLocations.set(
+                    name, this.get_uniform_location(name));
+            }
+            logEvent('shader-uniforms-ready', {
+                backend: 'Shell.GLSLEffect',
+                locations: Object.fromEntries(
+                    [...this._uniformLocations].map(
+                        ([name, location]) => [name, String(location)])),
+            });
+        }
+
+        vfunc_build_pipeline() {
+            logPipelineBuild('Shell.GLSLEffect');
+            try {
+                this.add_glsl_snippet(
+                    Cogl.SnippetHook.FRAGMENT,
+                    SHADER_DECLARATIONS,
+                    SHADER_CODE,
+                    true
+                );
+            } catch (error) {
+                this.set_enabled(false);
+                notifyRendererFailure(error);
+                throw error;
+            }
+        }
+
+        _setUniform(name, value) {
+            this.set_uniform_float(
+                this._uniformLocations.get(name), 1, [value]);
+        }
+    });
+    Object.assign(LegacyEffect.prototype, MatrixEffectMethods);
+    return LegacyEffect;
+}
+
+function defineShaderEffect() {
+    const ShaderEffect = GObject.registerClass(
+    class MatrixIlluminationEffect extends Clutter.ShaderEffect {
+        _init(params) {
+            super._init(params);
+            logEvent('shader-uniforms-ready', {
+                backend: 'Clutter.ShaderEffect',
+                uniforms: UNIFORM_NAMES,
+            });
+        }
+
+        // Called once per class; the snippet is shared by every monitor.
+        vfunc_get_static_snippet() {
+            logPipelineBuild('Clutter.ShaderEffect');
+            const snippet = Cogl.Snippet.new(
+                Cogl.SnippetHook.FRAGMENT, SHADER_DECLARATIONS, null);
+            snippet.set_replace(SHADER_CODE);
+            return snippet;
+        }
+
+        _setUniform(name, value) {
+            this.set_uniform_float(name, 1, [value]);
+        }
+    });
+    Object.assign(ShaderEffect.prototype, MatrixEffectMethods);
+    return ShaderEffect;
+}
+
+const MatrixIlluminationEffect = USE_LEGACY_GLSL_EFFECT
+    ? defineLegacyEffect()
+    : defineShaderEffect();
 
 class MonitorRain {
     constructor(index, monitor, fontSize, glyphScale, rainSpeed, streamDensity,

@@ -21,8 +21,9 @@ check_shell_version() {
 
     require_command gnome-shell
     shell_version="$(gnome-shell --version)"
-    if [[ "$shell_version" != 'GNOME Shell 50'* ]]; then
-        printf 'Code Rain requires GNOME Shell 50; found: %s\n' \
+    if [[ "$shell_version" != 'GNOME Shell 50'* &&
+        "$shell_version" != 'GNOME Shell 51'* ]]; then
+        printf 'Code Rain requires GNOME Shell 50 or 51; found: %s\n' \
             "$shell_version" >&2
         exit 1
     fi

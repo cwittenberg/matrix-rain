@@ -6,6 +6,6 @@
   "donations": {"kofi": "cwittenberg"},
   "gettext-domain": "matrix-rain@cwittenberg",
   "version": 20,
-  "shell-version": ["50"],
+  "shell-version": ["50", "51"],
   "settings-schema": "org.gnome.shell.extensions.matrix-rain"
 }
